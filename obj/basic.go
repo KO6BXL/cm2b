@@ -5,7 +5,7 @@ import (
 	"log"
 	"math"
 
-	"github.com/ko6bxl/cm2b/cm2go/block"
+	"github.com/ko6bxl/cm2go/block"
 )
 
 const NoOff = "noOff"
