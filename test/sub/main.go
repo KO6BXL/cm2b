@@ -15,8 +15,6 @@ type in struct {
 }
 
 func main() {
-	//negate, _ := obj.Negate(4)
-	// fin, err := build.FastCompile([]block.Collection{negate})
 	var test block.Collection
 	var inyes in
 	sub, subIO := obj.Sub(8)
@@ -48,13 +46,6 @@ func main() {
 
 		test.Connect(inyes.BIn[i], subIO.AIn[i])
 	}
-
-	//var test block.Collection
-	//flip := test.Append(block.FLIPFLOP())
-	//flip.State = true
-	//flip.Offset.Y = 0
-	//flip.Offset.X = 0
-	//flip.Offset.Z = 2
 
 	fin, err := build.Compile([]block.Collection{test})
 	if err != nil {
