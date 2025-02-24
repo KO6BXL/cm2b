@@ -19,7 +19,7 @@ func main() {
 	// fin, err := build.FastCompile([]block.Collection{negate})
 	var test block.Collection
 	var inyes in
-	add, addIO := obj.Add(8)
+	sub, subIO := obj.Sub(8)
 
 	for i := range 8 {
 		node := test.Append(block.NODE())
@@ -37,16 +37,16 @@ func main() {
 		inyes.BIn = append(inyes.BIn, node)
 	}
 
-	test, err := obj.Merge(test, add, obj.NoOff)
+	test, err := obj.Merge(test, sub, obj.NoOff)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for i := range 8 {
-		test.Connect(inyes.AIn[i], addIO.BIn[i])
+		test.Connect(inyes.AIn[i], subIO.BIn[i])
 
-		test.Connect(inyes.BIn[i], addIO.AIn[i])
+		test.Connect(inyes.BIn[i], subIO.AIn[i])
 	}
 
 	//var test block.Collection

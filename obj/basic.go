@@ -1,11 +1,14 @@
 package obj
 
 import (
+	"errors"
 	"log"
 	"math"
 
-	"github.com/nameless9000/cm2go/block"
+	"github.com/ko6bxl/cm2b/cm2go/block"
 )
+
+const NoOff = "noOff"
 
 func Add(bits int) (block.Collection, AddIO) {
 	var add AddIO
@@ -75,27 +78,56 @@ func Add(bits int) (block.Collection, AddIO) {
 		add.BIn = append(add.BIn, in2)
 
 		add.COut = append(add.COut, or1)
-		add.OOut = append(add.OOut, out1)
+		add.AOut = append(add.AOut, out1)
 		if level > 0 {
 			adder.Connect(add.COut[level-1], add.CIn[level])
 		}
 
 	}
-	log.Println(add.COut)
 	return adder, add
 }
 
-func Merge(col1, col2 block.Collection) block.Collection {
+func Merge(col1, col2 block.Collection, direction string) (block.Collection, error) {
 	var new block.Collection
-	for _, block := range col2.Blocks {
-		block.Offset.X += col1.Position.X
-		block.Offset.Y += col1.Position.Y
-		block.Offset.Z += col1.Position.Z
+	var mostLength int
+	switch direction {
+	case "Z":
+		for _, block := range col1.Blocks {
+			if mostLength < int(block.Offset.Z) {
+				mostLength = int(block.Offset.Z)
+			}
+		}
+
+		for _, block := range col2.Blocks {
+			block.Offset.Z += float32(mostLength) + 1
+		}
+	case "Y":
+		for _, block := range col1.Blocks {
+			if mostLength < int(block.Offset.Y) {
+				mostLength = int(block.Offset.Y)
+			}
+		}
+		for _, block := range col2.Blocks {
+			block.Offset.Y += float32(mostLength) + 1
+		}
+	case "X":
+		for _, block := range col1.Blocks {
+			if mostLength < int(block.Offset.X) {
+				mostLength = int(block.Offset.X)
+			}
+		}
+		for _, block := range col2.Blocks {
+			block.Offset.X += float32(mostLength) + 1
+		}
+	case "noOff":
+		log.Println("Declared 'noOff' in obj.Merge()")
+	default:
+		return new, errors.New("Direction not known!")
 	}
 
 	new.Blocks = append(col1.Blocks, col2.Blocks...)
 	new.Connections = append(col1.Connections, col2.Connections...)
-	return new
+	return new, nil
 }
 
 type AddIO struct {
@@ -104,12 +136,12 @@ type AddIO struct {
 	BIn []*block.Base
 
 	COut []*block.Base
-	OOut []*block.Base
+	AOut []*block.Base
 }
 
 type NegateIO struct {
 	AIn  []*block.Base
-	OOut []*block.Base
+	AOut []*block.Base
 }
 
 func Negate(bits int) (block.Collection, NegateIO) {
@@ -118,25 +150,30 @@ func Negate(bits int) (block.Collection, NegateIO) {
 
 	add, aio := Add(bits)
 
-	negate = Merge(negate, add)
+	negate, err := Merge(negate, add, "Z")
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	flip := negate.Append(block.FLIPFLOP())
-	flip.Offset.X = 2
-	flip.Offset.Z = -1
+	flip.Offset.Y = 0
+	flip.Offset.X = 1
+	flip.Offset.Z = 0
 	flip.State = true
 
-	negate.Connect(flip, aio.AIn[0])
+	negate.Connect(flip, aio.BIn[0])
 
 	for i := range bits {
 		nor := negate.Append(block.NOR())
 		nor.Offset.Y = float32(i)
-		nor.Offset.Z = -1
+		nor.Offset.Z = 0
 
-		negate.Connect(nor, aio.BIn[i])
+		negate.Connect(nor, aio.AIn[i])
 		nio.AIn = append(nio.AIn, nor)
 	}
 
-	nio.OOut = aio.OOut
+	nio.AOut = aio.AOut
 
 	return negate, nio
 }
@@ -214,4 +251,102 @@ func Decoder(bits int) (block.Collection, DecodeIO) {
 	}
 
 	return decode, decodeIO
+}
+
+type SubIO struct {
+	AIn []*block.Base
+	BIn []*block.Base
+
+	AOut []*block.Base
+	COut []*block.Base
+}
+
+func Sub(bits int) (block.Collection, SubIO) {
+	var sub block.Collection
+	var subIO SubIO
+	negate, negIO := Negate(bits)
+	add, addIO := Add(bits)
+
+	sub, err := Merge(negate, add, "Z")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for i, aOut := range negIO.AOut {
+		sub.Connect(aOut, addIO.BIn[i])
+	}
+
+	subIO.AIn = addIO.AIn
+	subIO.AOut = addIO.AOut
+	subIO.COut = addIO.COut
+
+	subIO.BIn = negIO.AIn
+
+	return sub, subIO
+
+}
+
+type MuxIO struct {
+	AIn []*block.Base
+	BIn []*block.Base
+	CIn []*block.Base
+
+	AOut []*block.Base
+}
+
+func Mux(bits int) (block.Collection, MuxIO) {
+	var mux block.Collection
+	var muxIO MuxIO
+
+	ctrl := mux.Append(block.NODE())
+	ctrl.Offset.X = -1
+	nor := mux.Append(block.NOR())
+	nor.Offset.X = -1
+	nor.Offset.Y = 1
+	mux.Connect(ctrl, nor)
+	for i := range bits {
+		andA := mux.Append(block.AND())
+		andA.Offset.Y = float32(i)
+		andB := mux.Append(block.AND())
+		andB.Offset.Y = float32(i)
+		andB.Offset.X = 1
+		node := mux.Append(block.NODE())
+		node.Offset.Y = float32(i)
+		node.Offset.Z = 1
+
+		muxIO.AIn = append(muxIO.AIn, andA)
+		muxIO.BIn = append(muxIO.BIn, andB)
+		muxIO.AOut = append(muxIO.AOut, node)
+
+		mux.Connect(andA, node)
+		mux.Connect(andB, node)
+		mux.Connect(ctrl, andB)
+		mux.Connect(nor, andA)
+	}
+
+	return mux, muxIO
+}
+
+type AndIO struct {
+	AIn []*block.Base
+	BIn []*block.Base
+
+	AOut []*block.Base
+}
+
+func And(bits int) (block.Collection, AndIO) {
+	var and block.Collection
+	var andIO AndIO
+
+	for i := range bits {
+		theAnd := and.Append(block.AND())
+		theAnd.Offset.Y = float32(i)
+
+		andIO.AIn = append(andIO.AIn, theAnd)
+		andIO.BIn = append(andIO.BIn, theAnd)
+		andIO.AOut = append(andIO.AOut, theAnd)
+	}
+
+	return and, andIO
 }
