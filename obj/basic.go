@@ -350,3 +350,41 @@ func And(bits int) (block.Collection, AndIO) {
 
 	return and, andIO
 }
+
+type RegIO struct {
+	AIn []*block.Base
+	CIn *block.Base
+
+	AOut []*block.Base
+}
+
+func Register(bits int) (block.Collection, RegIO) {
+	var reg block.Collection
+	var regIO RegIO
+
+	ctrl := reg.Append(block.NODE())
+	ctrl.Offset.Z = 1
+	regIO.CIn = ctrl
+
+	for i := range bits {
+		flip := reg.Append(block.FLIPFLOP())
+		flip.Offset.X = 1
+		flip.Offset.Y = float32(i)
+
+		xor := reg.Append(block.XOR())
+		xor.Offset.X = 1
+		xor.Offset.Z = 1
+		xor.Offset.Y = float32(i)
+
+		and := reg.Append(block.AND())
+		and.Offset.Y = float32(i)
+
+		reg.Connect(regIO.CIn, and)
+		reg.Connect(xor, and)
+		reg.Connect(flip, xor)
+		reg.Connect(and, flip)
+		regIO.AIn = append(regIO.AIn, xor)
+		regIO.AOut = append(regIO.AOut, flip)
+	}
+	return reg, regIO
+}
