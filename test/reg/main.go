@@ -48,13 +48,6 @@ func main() {
 	}
 
 	test.Connect(testIO.CIn, regIO.CIn)
-
-	for i := range bits {
-		log.Println("testIO")
-		log.Println(testIO.AIn[i])
-		log.Println("regIO")
-		log.Println(regIO.AIn[i])
-	}
 	test, _ = obj.Merge(test, reg, "Z")
 	fin, err := build.Compile([]block.Collection{test})
 	if err != nil {
