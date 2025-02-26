@@ -388,3 +388,134 @@ func Register(bits int) (block.Collection, RegIO) {
 	}
 	return reg, regIO
 }
+
+type SwitchIO struct {
+	AIn []*block.Base
+	CIn *block.Base
+
+	AOut []*block.Base
+}
+
+func Switch(bits int) (block.Collection, SwitchIO) {
+	var switchIO SwitchIO
+
+	and, andIO := And(bits)
+
+	ctrl := and.Append(block.NODE())
+	ctrl.Offset.X = 2
+
+	for i := range bits {
+		and.Connect(ctrl, andIO.BIn[i])
+	}
+
+	switchIO.AIn = andIO.AIn
+	switchIO.CIn = ctrl
+	switchIO.AOut = andIO.AOut
+	return and, switchIO
+}
+
+type MemIO struct {
+	AIn []*block.Base
+	BIn []*block.Base
+	WIn *block.Base
+
+	AOut []*block.Base
+}
+
+type finRegIO struct {
+	Reg []RegIO
+	RIn []*block.Base
+	WIn []*block.Base
+
+	AOut [][]*block.Base
+}
+
+func Memory(bits int) (block.Collection, MemIO) {
+	var mem block.Collection
+	var memIO MemIO
+	var size int = int(math.Pow(2, float64(bits)))
+
+	write := mem.Append(block.NODE())
+	write.Offset.X = 2
+	memIO.WIn = write
+
+	for i := range bits {
+		in := mem.Append(block.NODE())
+		in.Offset.Y = float32(i)
+		memIO.AIn = append(memIO.AIn, in)
+
+		adrs := mem.Append(block.NODE())
+		adrs.Offset.X = 1
+		adrs.Offset.Y = float32(i)
+		memIO.BIn = append(memIO.BIn, adrs)
+
+		out := mem.Append(block.NODE())
+		out.Offset.X = 5
+		out.Offset.Y = float32(i)
+		memIO.AOut = append(memIO.AOut, out)
+	}
+
+	dec, decIO := Decoder(bits)
+
+	for _, blk := range dec.Blocks {
+		blk.Offset.X = 3
+	}
+
+	mem.Merge(&dec)
+
+	for i := range bits {
+		mem.Connect(memIO.BIn[i], decIO.AIn[i])
+	}
+	var finReg block.Collection
+	var finRegIO finRegIO
+	for i := range size {
+		reg, regIO := Register(bits)
+		switchh, switchIO := Switch(bits)
+		wAnd, wAndIO := And(1)
+
+		for _, blk := range wAnd.Blocks {
+			blk.Offset.Z = 5
+			blk.Offset.X = 2 + float32(i)
+		}
+		for _, blk := range reg.Blocks {
+			blk.Offset.Z = blk.Offset.Z + 6
+			blk.Offset.X = blk.Offset.X + 2 + float32(i*2)
+		}
+
+		for _, blk := range switchh.Blocks {
+			blk.Offset.Z = blk.Offset.Z + 8
+			blk.Offset.X = blk.Offset.X + 2 + float32(i)
+		}
+
+		reg.Merge(&switchh)
+		reg.Merge(&wAnd)
+		reg.Connect(wAndIO.AOut[0], regIO.CIn)
+		for ii := range bits {
+			reg.Connect(regIO.AOut[ii], switchIO.AIn[ii])
+		}
+		finReg.Merge(&reg)
+
+		finRegIO.Reg = append(finRegIO.Reg, regIO)
+		finRegIO.RIn = append(finRegIO.RIn, switchIO.CIn)
+		finRegIO.WIn = append(finRegIO.WIn, wAndIO.AIn[0])
+		finRegIO.AOut = append(finRegIO.AOut, switchIO.AOut)
+	}
+
+	mem.Merge(&finReg)
+
+	for i := range size {
+		mem.Connect(decIO.AOut[i], finRegIO.RIn[i])
+		mem.Connect(decIO.AOut[i], finRegIO.WIn[i])
+
+		mem.Connect(memIO.WIn, finRegIO.WIn[i])
+		for ii, x := range finRegIO.AOut[i] {
+			mem.Connect(x, memIO.AOut[ii])
+		}
+
+		for ii, x := range finRegIO.Reg[i].AIn {
+			mem.Connect(memIO.AIn[ii], x)
+		}
+	}
+
+	return mem, memIO
+}
