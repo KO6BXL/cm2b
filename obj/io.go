@@ -76,23 +76,45 @@ type finRegIO struct {
 	AOut [][]*block.Base
 }
 
-type xorIO struct {
+type XorIO struct {
 	AIn []*block.Base
 	BIn []*block.Base
 
 	AOut []*block.Base
 }
 
-type xnorIO struct {
+type XnorIO struct {
 	AIn []*block.Base
 	BIn []*block.Base
 
 	AOut []*block.Base
 }
 
-type norIO struct {
+type NorIO struct {
 	AIn []*block.Base
 	BIn []*block.Base
 
+	AOut []*block.Base
+}
+
+type OrIO struct {
+	AIn []*block.Base
+	BIn []*block.Base
+
+	AOut []*block.Base
+}
+
+type NandIO struct {
+	AIn []*block.Base
+	BIn []*block.Base
+
+	AOut []*block.Base
+}
+
+type LedIO struct {
+	AIn []*block.Base
+}
+type NodeIO struct {
+	AIn  []*block.Base
 	AOut []*block.Base
 }

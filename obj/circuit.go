@@ -513,9 +513,10 @@ func Memory(bits int) (block.Collection, MemIO) {
 	return mem, memIO
 }
 
-func Xor(bits int) (block.Collection, xorIO) {
+// next few funcs are basically the same, so I am not going to comment them all
+func Xor(bits int) (block.Collection, XorIO) {
 	var xor block.Collection
-	var xorIO xorIO
+	var xorIO XorIO
 
 	for i := range bits {
 		theXor := xor.Append(block.XOR())
@@ -528,9 +529,9 @@ func Xor(bits int) (block.Collection, xorIO) {
 	return xor, xorIO
 }
 
-func Xnor(bits int) (block.Collection, xnorIO) {
+func Xnor(bits int) (block.Collection, XnorIO) {
 	var xnor block.Collection
-	var xnorIO xnorIO
+	var xnorIO XnorIO
 
 	for i := range bits {
 		theXnor := xnor.Append(block.XNOR())
@@ -543,9 +544,9 @@ func Xnor(bits int) (block.Collection, xnorIO) {
 	return xnor, xnorIO
 }
 
-func Nor(bits int) (block.Collection, norIO) {
+func Nor(bits int) (block.Collection, NorIO) {
 	var nor block.Collection
-	var norIO norIO
+	var norIO NorIO
 
 	for i := range bits {
 		thenor := nor.Append(block.NOR())
@@ -556,4 +557,63 @@ func Nor(bits int) (block.Collection, norIO) {
 		norIO.AOut = append(norIO.AOut, thenor)
 	}
 	return nor, norIO
+}
+
+func Or(bits int) (block.Collection, OrIO) {
+	var Or block.Collection
+	var OrIO OrIO
+
+	for i := range bits {
+		theor := Or.Append(block.OR())
+		theor.Offset.Y = float32(i)
+
+		OrIO.AIn = append(OrIO.AIn, theor)
+		OrIO.BIn = append(OrIO.BIn, theor)
+		OrIO.AOut = append(OrIO.AOut, theor)
+	}
+	return Or, OrIO
+}
+
+func Nand(bits int) (block.Collection, NandIO) {
+	var nand block.Collection
+	var nandIO NandIO
+
+	for i := range bits {
+		thenand := nand.Append(block.NAND())
+		thenand.Offset.Y = float32(i)
+
+		nandIO.AIn = append(nandIO.AIn, thenand)
+		nandIO.BIn = append(nandIO.BIn, thenand)
+		nandIO.AOut = append(nandIO.AOut, thenand)
+	}
+	return nand, nandIO
+}
+
+func Led(bits int) (block.Collection, LedIO) {
+	var led block.Collection
+	var ledIO LedIO
+
+	for i := range bits {
+		leds := led.Append(block.LED(nil))
+		leds.Offset.Y = float32(i)
+
+		ledIO.AIn = append(ledIO.AIn, leds)
+	}
+
+	return led, ledIO
+}
+
+func Node(bits int) (block.Collection, NodeIO) {
+	var node block.Collection
+	var nodeIO NodeIO
+
+	for i := range bits {
+		nodes := node.Append(block.NODE())
+		nodes.Offset.Y = float32(i)
+
+		nodeIO.AIn = append(nodeIO.AIn, nodes)
+		nodeIO.AOut = nodeIO.AIn
+	}
+
+	return node, nodeIO
 }
