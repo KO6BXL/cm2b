@@ -82,3 +82,17 @@ type xorIO struct {
 
 	AOut []*block.Base
 }
+
+type xnorIO struct {
+	AIn []*block.Base
+	BIn []*block.Base
+
+	AOut []*block.Base
+}
+
+type norIO struct {
+	AIn []*block.Base
+	BIn []*block.Base
+
+	AOut []*block.Base
+}

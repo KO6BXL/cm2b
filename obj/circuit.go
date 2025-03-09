@@ -527,3 +527,33 @@ func Xor(bits int) (block.Collection, xorIO) {
 	}
 	return xor, xorIO
 }
+
+func Xnor(bits int) (block.Collection, xnorIO) {
+	var xnor block.Collection
+	var xnorIO xnorIO
+
+	for i := range bits {
+		theXnor := xnor.Append(block.XNOR())
+		theXnor.Offset.Y = float32(i)
+
+		xnorIO.AIn = append(xnorIO.AIn, theXnor)
+		xnorIO.BIn = append(xnorIO.BIn, theXnor)
+		xnorIO.AOut = append(xnorIO.AOut, theXnor)
+	}
+	return xnor, xnorIO
+}
+
+func Nor(bits int) (block.Collection, norIO) {
+	var nor block.Collection
+	var norIO norIO
+
+	for i := range bits {
+		thenor := nor.Append(block.NOR())
+		thenor.Offset.Y = float32(i)
+
+		norIO.AIn = append(norIO.AIn, thenor)
+		norIO.BIn = append(norIO.BIn, thenor)
+		norIO.AOut = append(norIO.AOut, thenor)
+	}
+	return nor, norIO
+}
