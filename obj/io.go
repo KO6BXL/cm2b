@@ -75,3 +75,10 @@ type finRegIO struct {
 
 	AOut [][]*block.Base
 }
+
+type xorIO struct {
+	AIn []*block.Base
+	BIn []*block.Base
+
+	AOut []*block.Base
+}

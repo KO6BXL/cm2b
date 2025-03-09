@@ -512,3 +512,18 @@ func Memory(bits int) (block.Collection, MemIO) {
 
 	return mem, memIO
 }
+
+func Xor(bits int) (block.Collection, xorIO) {
+	var xor block.Collection
+	var xorIO xorIO
+
+	for i := range bits {
+		theXor := xor.Append(block.XOR())
+		theXor.Offset.Y = float32(i)
+
+		xorIO.AIn = append(xorIO.AIn, theXor)
+		xorIO.BIn = append(xorIO.BIn, theXor)
+		xorIO.AOut = append(xorIO.AOut, theXor)
+	}
+	return xor, xorIO
+}
