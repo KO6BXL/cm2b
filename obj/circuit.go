@@ -130,20 +130,6 @@ func Merge(col1, col2 block.Collection, direction string) (block.Collection, err
 	return new, nil
 }
 
-type AddIO struct {
-	CIn []*block.Base
-	AIn []*block.Base
-	BIn []*block.Base
-
-	COut []*block.Base
-	AOut []*block.Base
-}
-
-type NegateIO struct {
-	AIn  []*block.Base
-	AOut []*block.Base
-}
-
 func Negate(bits int) (block.Collection, NegateIO) {
 	var negate block.Collection
 	var nio NegateIO
@@ -176,11 +162,6 @@ func Negate(bits int) (block.Collection, NegateIO) {
 	nio.AOut = aio.AOut
 
 	return negate, nio
-}
-
-type DecodeIO struct {
-	AIn  []*block.Base
-	AOut []*block.Base
 }
 
 func Decoder(bits int) (block.Collection, DecodeIO) {
@@ -253,14 +234,6 @@ func Decoder(bits int) (block.Collection, DecodeIO) {
 	return decode, decodeIO
 }
 
-type SubIO struct {
-	AIn []*block.Base
-	BIn []*block.Base
-
-	AOut []*block.Base
-	COut []*block.Base
-}
-
 func Sub(bits int) (block.Collection, SubIO) {
 	var sub block.Collection
 	var subIO SubIO
@@ -285,14 +258,6 @@ func Sub(bits int) (block.Collection, SubIO) {
 
 	return sub, subIO
 
-}
-
-type MuxIO struct {
-	AIn []*block.Base
-	BIn []*block.Base
-	CIn []*block.Base
-
-	AOut []*block.Base
 }
 
 func Mux(bits int) (block.Collection, MuxIO) {
@@ -328,13 +293,6 @@ func Mux(bits int) (block.Collection, MuxIO) {
 	return mux, muxIO
 }
 
-type AndIO struct {
-	AIn []*block.Base
-	BIn []*block.Base
-
-	AOut []*block.Base
-}
-
 func And(bits int) (block.Collection, AndIO) {
 	var and block.Collection
 	var andIO AndIO
@@ -349,13 +307,6 @@ func And(bits int) (block.Collection, AndIO) {
 	}
 
 	return and, andIO
-}
-
-type RegIO struct {
-	AIn []*block.Base
-	CIn *block.Base
-
-	AOut []*block.Base
 }
 
 func Register(bits int) (block.Collection, RegIO) {
@@ -389,13 +340,6 @@ func Register(bits int) (block.Collection, RegIO) {
 	return reg, regIO
 }
 
-type SwitchIO struct {
-	AIn []*block.Base
-	CIn *block.Base
-
-	AOut []*block.Base
-}
-
 func Switch(bits int) (block.Collection, SwitchIO) {
 	var switchIO SwitchIO
 
@@ -412,22 +356,6 @@ func Switch(bits int) (block.Collection, SwitchIO) {
 	switchIO.CIn = ctrl
 	switchIO.AOut = andIO.AOut
 	return and, switchIO
-}
-
-type MemIO struct {
-	AIn []*block.Base
-	BIn []*block.Base
-	WIn *block.Base
-
-	AOut []*block.Base
-}
-
-type finRegIO struct {
-	Reg []RegIO
-	RIn []*block.Base
-	WIn []*block.Base
-
-	AOut [][]*block.Base
 }
 
 func Memory(bits int) (block.Collection, MemIO) {
